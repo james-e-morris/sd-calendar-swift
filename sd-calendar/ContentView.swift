@@ -115,7 +115,7 @@ struct ContentView: View {
             return
         }
         // Check if the calendar exists
-        let calendars = eventStore.calendars(for: .event)
+        let calendars = eventStore.calendars(for: .event).filter { $0.title == CALENDAR_NAME }
         for cal: EKCalendar in calendars {
             if cal.title == CALENDAR_NAME {
                 calendar = cal
@@ -150,15 +150,18 @@ struct ContentView: View {
         let predicate = eventStore.predicateForEvents(
             withStart: oneYearAgo, end: oneYearAfter,
             calendars: [calendar!]
+            // calendars: eventStore.calendars(for: .event).filter { $0.title == CALENDAR_NAME }
         )
         let fetchedEvents = eventStore.events(matching: predicate)
         events = fetchedEvents.sorted { $0.startDate < $1.startDate }
     }
 
     private func createEvent() {
+        if eventTitle.isEmpty {
+            return
+        }
         func handleEventAccess(granted: Bool, error: Error?) {
             if granted && error == nil {
-                // get or create the calendar
                 checkAndCreateCalendar()
 
                 // create the event
@@ -166,7 +169,7 @@ struct ContentView: View {
                 newEvent.title = eventTitle
                 newEvent.startDate = eventStartDate
                 newEvent.endDate = eventEndDate
-                newEvent.calendar = eventStore.defaultCalendarForNewEvents
+                newEvent.calendar = calendar
                 do {
                     try eventStore.save(newEvent, span: .thisEvent)
                     print("Event saved successfully")
