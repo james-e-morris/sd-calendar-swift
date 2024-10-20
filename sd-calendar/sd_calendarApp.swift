@@ -5,14 +5,15 @@
 //  Created by James Morris on 10/19/24.
 //
 
-import SwiftUI
+import EventKit
 import SwiftData
+import SwiftUI
 
 @main
 struct sd_calendarApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Item.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
