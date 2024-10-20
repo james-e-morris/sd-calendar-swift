@@ -48,10 +48,10 @@ struct ContentView: View {
                 isPresented: $showNewCalendarModal,
                 message:
                     """
-                    A new calendar was created in the Calendar app named "sd-contest-calendar".
-                    The calendar is used for local sync, but interaction with the events is suggested through this app.
+                    A new calendar was created in the Calendar app named "\(Config.calendarName)".
+                    The calendar is used for local sync, but interaction with the events is suggested through this app only.
 
-                    It is suggested to hide the calendar in your calendar app settings so that the SD Contest Calendar events don't clog up your calendar on top of your own events.
+                    You can hide the calendar in your calendar app settings so that the \(Config.calendarName) events don't clog up your personal calendar.
 
                     Happy contesting!
                     """
@@ -73,7 +73,7 @@ struct ContentView: View {
         var calendar: EKCalendar?
 
         for cal in calendars {
-            if cal.title == "sd-calendar" {
+            if cal.title == Config.calendarName {
                 calendar = cal
                 break
             }
@@ -82,7 +82,7 @@ struct ContentView: View {
         // If the calendar doesn't exist, create it
         if calendar == nil {
             calendar = EKCalendar(for: .event, eventStore: eventStore)
-            calendar?.title = "sd-calendar"
+            calendar?.title = Config.calendarName
             calendar?.source = eventStore.defaultCalendarForNewEvents?.source
             calendar?.cgColor = Color.white.cgColor
 
