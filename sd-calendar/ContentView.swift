@@ -1,6 +1,8 @@
 import EventKit
 import SwiftUI
 
+let CALENDAR_NAME = Config.calendarName
+
 struct ModalView: View {
     @Binding var isPresented: Bool  // Controls the presentation state
     let message: String
@@ -30,7 +32,7 @@ struct ContentView: View {
     @State private var eventTitle = ""
     @State private var eventStartDate = Date()
     @State private var eventEndDate = Date()
-    private let eventStore = EKEventStore()
+    @State private var eventStore = EKEventStore()
 
     var body: some View {
         VStack {
@@ -68,10 +70,10 @@ struct ContentView: View {
                 isPresented: $showNewCalendarAlertModal,
                 message:
                     """
-                    A new calendar was created in the Calendar app named "\(Config.calendarName)".
+                    A new calendar was created in the Calendar app named "\(CALENDAR_NAME)".
                     The calendar is used for local sync, but interaction with the events is suggested through this app only.
 
-                    You can hide the calendar in your calendar app settings so that the \(Config.calendarName) events don't clog up your personal calendar.
+                    You can hide the calendar in your calendar app settings so that the \(CALENDAR_NAME) events don't clog up your personal calendar.
 
                     Happy contesting!
                     """
@@ -108,25 +110,14 @@ struct ContentView: View {
         .padding()
     }
 
-    private func loadEvents() {
-        checkAndCreateCalendar()
-        let oneYearAgo = Date().addingTimeInterval(-365 * 24 * 3600)
-        let oneYearAfter = Date().addingTimeInterval(365 * 24 * 3600)
-        let predicate = eventStore.predicateForEvents(
-            withStart: oneYearAgo, end: oneYearAfter, calendars: [self.calendar!])
-        events = eventStore.events(matching: predicate)
-    }
-
     func checkAndCreateCalendar() {
-        if self.calendar != nil {
+        if calendar != nil {
             return
         }
-        let eventStore = EKEventStore()
         // Check if the calendar exists
         let calendars = eventStore.calendars(for: .event)
-        var calendar: EKCalendar?
-        for cal in calendars {
-            if cal.title == Config.calendarName {
+        for cal: EKCalendar in calendars {
+            if cal.title == CALENDAR_NAME {
                 calendar = cal
                 break
             }
@@ -134,7 +125,7 @@ struct ContentView: View {
         // If the calendar doesn't exist, create it
         if calendar == nil {
             calendar = EKCalendar(for: .event, eventStore: eventStore)
-            calendar?.title = Config.calendarName
+            calendar?.title = CALENDAR_NAME
             calendar?.source = eventStore.defaultCalendarForNewEvents?.source
             calendar?.cgColor = Color.white.cgColor
             do {
@@ -145,7 +136,23 @@ struct ContentView: View {
                 calendar = eventStore.defaultCalendarForNewEvents
             }
         }
-        self.calendar = calendar
+    }
+
+    private func loadEvents() {
+        checkAndCreateCalendar()
+        // return if no calendar and log error
+        if calendar == nil {
+            print("No calendar found")
+            return
+        }
+        let oneYearAgo = Date().addingTimeInterval(-365 * 24 * 3600)
+        let oneYearAfter = Date().addingTimeInterval(365 * 24 * 3600)
+        let predicate = eventStore.predicateForEvents(
+            withStart: oneYearAgo, end: oneYearAfter,
+            calendars: [calendar!]
+        )
+        let fetchedEvents = eventStore.events(matching: predicate)
+        events = fetchedEvents.sorted { $0.startDate < $1.startDate }
     }
 
     private func createEvent() {
